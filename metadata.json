@@ -1,0 +1,8 @@
+{
+  "name": "Remix Teacher Administration Progress Tracker",
+  "description": "A comprehensive tool to track and record teachers\u0027 administration progress by subject, department groups, and key administrative indicators.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
