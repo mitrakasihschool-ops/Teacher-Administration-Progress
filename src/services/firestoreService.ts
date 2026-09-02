@@ -224,17 +224,20 @@ export async function saveProgressToFirestore(
   const docKey = getProgressKey(teacherId, subjectId, indicatorId);
   const progDocRef = doc(db, PROGRESS_COLLECTION, docKey);
 
+  const snap = await getDoc(progDocRef);
+  const existing = snap.exists() ? (snap.data() as IndicatorProgress) : {};
+
   const fullData: IndicatorProgress = {
     teacherId,
     subjectId,
     indicatorId,
-    status: (updates.status as ProgressStatus) || 'not_started',
-    progressText: updates.progressText || '',
-    percentage: updates.percentage !== undefined ? updates.percentage : 0,
-    documentRef: updates.documentRef || '',
-    lastUpdated: updates.lastUpdated || new Date().toISOString(),
-    verifiedBy: updates.verifiedBy,
+    status: 'not_started',
+    progressText: '',
+    percentage: 0,
+    documentRef: '',
+    ...existing,
     ...updates,
+    lastUpdated: updates.lastUpdated || new Date().toISOString(),
   };
 
   await setDoc(progDocRef, fullData, { merge: true });
