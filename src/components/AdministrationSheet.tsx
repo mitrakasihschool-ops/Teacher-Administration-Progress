@@ -15,7 +15,10 @@ import {
   SlidersHorizontal,
   X,
   Sparkles,
-  HelpCircle
+  HelpCircle,
+  GripVertical,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { Teacher, TeacherSubject, Indicator, IndicatorProgress, ProgressStatus } from '../types';
 import { getProgressKey, calculateSubjectProgress, getSubjectIndicators } from '../utils/storage';
@@ -125,25 +128,65 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
   };
 
   // Filter indicators
-  const filteredIndicators = indicators.filter((ind) => {
-    const key = getProgressKey(teacher.id, subject.id, ind.id);
-    const rec = progressMap[key];
-    const status = rec ? rec.status : 'not_started';
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-    const matchesFilter =
-      filterStatus === 'ALL' ||
-      (filterStatus === 'completed' && (status === 'completed' || status === 'verified')) ||
-      (filterStatus === 'in_progress' && status === 'in_progress') ||
-      (filterStatus === 'needs_revision' && status === 'needs_revision') ||
-      (filterStatus === 'not_started' && status === 'not_started');
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
 
-    const matchesSearch =
-      ind.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ind.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (rec?.progressText || '').toLowerCase().includes(searchQuery.toLowerCase());
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
 
-    return matchesFilter && matchesSearch;
-  });
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+
+    const updated = [...indicators];
+    const [movedItem] = updated.splice(draggedIndex, 1);
+    updated.splice(targetIndex, 0, movedItem);
+
+    onUpdateSubjectIndicators(teacher.id, subject.id, updated);
+    setDraggedIndex(null);
+    showToast(`Reordered indicators successfully`, 'info');
+  };
+
+  const handleMove = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= indicators.length) return;
+
+    const updated = [...indicators];
+    const [movedItem] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, movedItem);
+
+    onUpdateSubjectIndicators(teacher.id, subject.id, updated);
+    showToast(`Reordered indicators successfully`, 'info');
+  };
+
+  const filteredIndicatorEntries = indicators
+    .map((indicator, originalIndex) => ({ indicator, originalIndex }))
+    .filter(({ indicator }) => {
+      const key = getProgressKey(teacher.id, subject.id, indicator.id);
+      const rec = progressMap[key];
+      const status = rec ? rec.status : 'not_started';
+
+      const matchesFilter =
+        filterStatus === 'ALL' ||
+        (filterStatus === 'completed' && (status === 'completed' || status === 'verified')) ||
+        (filterStatus === 'in_progress' && status === 'in_progress') ||
+        (filterStatus === 'needs_revision' && status === 'needs_revision') ||
+        (filterStatus === 'not_started' && status === 'not_started');
+
+      const matchesSearch =
+        indicator.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        indicator.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (rec?.progressText || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchesFilter && matchesSearch;
+    });
 
   const handleFieldChange = (
     indicatorId: string,
@@ -471,7 +514,7 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
-            {filteredIndicators.length === 0 ? (
+            {filteredIndicatorEntries.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-8 text-center text-slate-400">
                   <p className="text-xs font-medium">No indicators match your filter for this subject.</p>
@@ -488,7 +531,7 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
                 </td>
               </tr>
             ) : (
-              filteredIndicators.map((indicator) => {
+              filteredIndicatorEntries.map(({ indicator, originalIndex }) => {
                 const key = getProgressKey(teacher.id, subject.id, indicator.id);
                 const record = progressMap[key] || {
                   teacherId: teacher.id,
@@ -509,7 +552,13 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
                   <tr
                     key={indicator.id}
                     id={`row-indicator-${indicator.id}`}
-                    className={`hover:bg-slate-50/80 transition-colors ${
+                    draggable={true}
+                    onDragStart={(e) => handleDragStart(e, originalIndex)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, originalIndex)}
+                    className={`hover:bg-slate-50/80 transition-colors cursor-grab active:cursor-grabbing ${
+                      draggedIndex === originalIndex ? 'opacity-40 bg-slate-100' : ''
+                    } ${
                       record.status === 'completed' || record.status === 'verified'
                         ? 'bg-emerald-50/10'
                         : record.status === 'needs_revision'
@@ -729,9 +778,27 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
                       </div>
                     </td>
 
-                    {/* 5. Actions (Edit / Delete Indicator from this subject) */}
+                    {/* 5. Actions (Reorder / Edit / Delete Indicator from this subject) */}
                     <td className="py-3.5 px-2 align-top text-center">
-                      <div className="flex items-center justify-center gap-1">
+                      <div className="flex items-center justify-center gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleMove(originalIndex, 'up')}
+                          disabled={originalIndex === 0}
+                          className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                          title="Move Up"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMove(originalIndex, 'down')}
+                          disabled={originalIndex === indicators.length - 1}
+                          className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                          title="Move Down"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => {
@@ -752,6 +819,9 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
+                        <div className="cursor-grab active:cursor-grabbing text-slate-300 hover:text-slate-600 p-0.5" title="Drag to reorder">
+                          <GripVertical className="w-3.5 h-3.5" />
+                        </div>
                       </div>
                     </td>
                   </tr>
