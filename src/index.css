@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:p-0 {
+    padding: 0 !important;
+  }
+
+  .print\:overflow-visible {
+    overflow: visible !important;
+  }
+
+  /* Force clean page breaks between subject tables */
+  #printable-report .border {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+

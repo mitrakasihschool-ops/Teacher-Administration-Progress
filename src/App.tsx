@@ -13,11 +13,8 @@ import {
 } from './types';
 import { 
   loadTeachers, 
-  saveTeachers, 
   loadProgress, 
-  saveProgress, 
   loadGroups, 
-  saveGroups,
   getProgressKey,
   getSubjectIndicators
 } from './utils/storage';
@@ -37,7 +34,6 @@ import {
 import { exportProgressToCSV } from './utils/export';
 import { Header } from './components/Header';
 import { StatsBanner } from './components/StatsBanner';
-import { TeacherSelector } from './components/TeacherSelector';
 import { SubjectSelector } from './components/SubjectSelector';
 import { AdministrationSheet } from './components/AdministrationSheet';
 import { GroupMatrixView } from './components/GroupMatrixView';
@@ -87,7 +83,6 @@ export default function App() {
       (remoteTeachers) => {
         if (remoteTeachers && remoteTeachers.length > 0) {
           setTeachers(remoteTeachers);
-          saveTeachers(remoteTeachers);
 
           // If no selected teacher or current selected is not found, select first
           setSelectedTeacherId((currId) => {
@@ -108,7 +103,6 @@ export default function App() {
       (remoteProgressMap) => {
         if (remoteProgressMap && Object.keys(remoteProgressMap).length > 0) {
           setProgressMap(remoteProgressMap);
-          saveProgress(remoteProgressMap);
         }
         setSyncStatus('synced');
       },
@@ -123,7 +117,6 @@ export default function App() {
       (remoteGroups) => {
         if (remoteGroups && remoteGroups.length > 0) {
           setGroups(remoteGroups);
-          saveGroups(remoteGroups);
         }
         setSyncStatus('synced');
       },
@@ -140,19 +133,6 @@ export default function App() {
       unsubscribeGroups();
     };
   }, []);
-
-  // Sync to localStorage as offline fallback
-  useEffect(() => {
-    saveTeachers(teachers);
-  }, [teachers]);
-
-  useEffect(() => {
-    saveProgress(progressMap);
-  }, [progressMap]);
-
-  useEffect(() => {
-    saveGroups(groups);
-  }, [groups]);
 
   // Current selected teacher and subject
   const currentTeacher = teachers.find((t) => t.id === selectedTeacherId) || teachers[0];
@@ -418,23 +398,63 @@ export default function App() {
 
         {/* 3. Primary Content Area */}
         {viewMode === 'tracker' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Column: Teacher Selection Directory */}
-            <div className="lg:col-span-4 xl:col-span-3 h-full">
-              <TeacherSelector
-                teachers={teachers}
-                selectedTeacherId={selectedTeacherId}
-                onSelectTeacher={handleSelectTeacher}
-                selectedGroup={selectedGroup}
-                onSelectGroup={setSelectedGroup}
-                groups={groups}
-                progressMap={progressMap}
-                onAddNewTeacher={() => setIsManageTeachersOpen(true)}
-              />
+          <div className="space-y-4">
+            {/* Top Teacher & Department Group Selector Bar */}
+            <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+                <div className="flex-1 min-w-[220px]">
+                  <label className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1">
+                    Select Teacher:
+                  </label>
+                  <select
+                    id="select-teacher-dropdown"
+                    value={selectedTeacherId}
+                    onChange={(e) => handleSelectTeacher(e.target.value)}
+                    className="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-colors"
+                  >
+                    {teachers
+                      .filter((t) => selectedGroup === 'ALL' || t.group === selectedGroup)
+                      .map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} {t.nip ? `(NIP: ${t.nip})` : ''} - [{t.group}]
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="w-full sm:w-64">
+                  <label className="block text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1">
+                    Department Group Filter:
+                  </label>
+                  <select
+                    id="select-group-dropdown"
+                    value={selectedGroup}
+                    onChange={(e) => setSelectedGroup(e.target.value)}
+                    className="w-full text-xs font-medium bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-colors"
+                  >
+                    <option value="ALL">All Teacher Groups ({teachers.length})</option>
+                    {groups.map((grp) => (
+                      <option key={grp} value={grp}>
+                        {grp}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsManageTeachersOpen(true)}
+                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>Manage Teachers</span>
+                </button>
+              </div>
             </div>
 
-            {/* Right Column: Assigned Subject & Administration Indicators Progress Sheet */}
-            <div className="lg:col-span-8 xl:col-span-9 space-y-4">
+            {/* Assigned Subject & Administration Indicators Progress Sheet */}
+            <div className="space-y-4">
               {currentTeacher && (
                 <>
                   {/* Subject Assignment Tabs (Parent Table Selector) */}

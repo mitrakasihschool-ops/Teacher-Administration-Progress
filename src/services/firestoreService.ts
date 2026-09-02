@@ -98,16 +98,13 @@ export function subscribeToTeachers(
         });
         onUpdate(list);
       } else {
-        // If empty on snapshot, seed and use default
-        seedFirestoreIfEmpty().then((seeded) => {
-          if (seeded) {
-            onUpdate(INITIAL_TEACHERS);
-          }
-        });
+        onUpdate(INITIAL_TEACHERS);
+        seedFirestoreIfEmpty().catch(() => {});
       }
     },
     (err) => {
-      console.error('Firestore Teachers subscription error:', err);
+      console.warn('Firestore Teachers subscription offline/notice:', err.message);
+      onUpdate(INITIAL_TEACHERS);
       if (onError) onError(err);
     }
   );
@@ -125,15 +122,20 @@ export function subscribeToProgress(
     progressRef,
     (snapshot) => {
       const map: Record<string, IndicatorProgress> = {};
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data() as IndicatorProgress;
-        const key = getProgressKey(data.teacherId, data.subjectId, data.indicatorId);
-        map[key] = data;
-      });
-      onUpdate(map);
+      if (!snapshot.empty) {
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as IndicatorProgress;
+          const key = getProgressKey(data.teacherId, data.subjectId, data.indicatorId);
+          map[key] = data;
+        });
+        onUpdate(map);
+      } else {
+        onUpdate(INITIAL_PROGRESS);
+      }
     },
     (err) => {
-      console.error('Firestore Progress subscription error:', err);
+      console.warn('Firestore Progress subscription offline/notice:', err.message);
+      onUpdate(INITIAL_PROGRESS);
       if (onError) onError(err);
     }
   );
@@ -160,7 +162,8 @@ export function subscribeToGroups(
       onUpdate(INITIAL_GROUPS);
     },
     (err) => {
-      console.error('Firestore Groups subscription error:', err);
+      console.warn('Firestore Groups subscription offline/notice:', err.message);
+      onUpdate(INITIAL_GROUPS);
       if (onError) onError(err);
     }
   );

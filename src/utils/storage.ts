@@ -1,83 +1,30 @@
 import { Teacher, Indicator, IndicatorProgress, TeacherSubject } from '../types';
 import { INITIAL_TEACHERS, INITIAL_PROGRESS, INITIAL_GROUPS, getDefaultIndicatorsForSubject } from '../data/initialData';
 
-const TEACHERS_STORAGE_KEY = 'tap_teachers_v5';
-const PROGRESS_STORAGE_KEY = 'tap_progress_v5';
-const GROUPS_STORAGE_KEY = 'tap_groups_v3';
-
 export function loadTeachers(): Teacher[] {
-  try {
-    const saved = localStorage.getItem(TEACHERS_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Ensure every subject has valid indicators
-        return parsed.map((t: Teacher) => ({
-          ...t,
-          subjects: (t.subjects || []).map((sub: TeacherSubject) => ({
-            ...sub,
-            indicators: Array.isArray(sub.indicators) && sub.indicators.length > 0
-              ? sub.indicators
-              : getDefaultIndicatorsForSubject(sub.name, sub.grade),
-          })),
-        }));
-      }
-    }
-  } catch (e) {
-    console.error('Failed to load teachers from storage:', e);
-  }
   return INITIAL_TEACHERS;
 }
 
 export function saveTeachers(teachers: Teacher[]): void {
-  try {
-    localStorage.setItem(TEACHERS_STORAGE_KEY, JSON.stringify(teachers));
-  } catch (e) {
-    console.error('Failed to save teachers to storage:', e);
-  }
+  // No-op: Local storage removed, data stored directly in Firestore
 }
 
 export function loadProgress(): Record<string, IndicatorProgress> {
-  try {
-    const saved = localStorage.getItem(PROGRESS_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed && typeof parsed === 'object') return parsed;
-    }
-  } catch (e) {
-    console.error('Failed to load progress from storage:', e);
-  }
   return INITIAL_PROGRESS;
 }
 
 export function saveProgress(progress: Record<string, IndicatorProgress>): void {
-  try {
-    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
-  } catch (e) {
-    console.error('Failed to save progress to storage:', e);
-  }
+  // No-op: Local storage removed, data stored directly in Firestore
 }
 
 export function loadGroups(): string[] {
-  try {
-    const saved = localStorage.getItem(GROUPS_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (e) {
-    console.error('Failed to load groups from storage:', e);
-  }
   return INITIAL_GROUPS;
 }
 
 export function saveGroups(groups: string[]): void {
-  try {
-    localStorage.setItem(GROUPS_STORAGE_KEY, JSON.stringify(groups));
-  } catch (e) {
-    console.error('Failed to save groups to storage:', e);
-  }
+  // No-op: Local storage removed, data stored directly in Firestore
 }
+
 
 export function getProgressKey(teacherId: string, subjectId: string, indicatorId: string): string {
   return `${teacherId}_${subjectId}_${indicatorId}`;
