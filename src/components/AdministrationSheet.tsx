@@ -178,27 +178,7 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
     }, 2000);
   };
 
-  // Execute Mark All Complete
-  const handleConfirmMarkAllComplete = () => {
-    onBulkUpdateStatus(
-      teacher.id,
-      subject.id,
-      'completed',
-      100,
-      customCompleteNote.trim() || 'Verified complete during department audit.'
-    );
-    setBulkConfirmModal(null);
-    setFilterStatus('ALL');
-    showToast(`✓ All ${indicators.length} indicators for ${subject.name} marked as Completed (100%).`, 'success');
-  };
 
-  // Execute Reset
-  const handleConfirmReset = () => {
-    onBulkUpdateStatus(teacher.id, subject.id, 'not_started', 0, '');
-    setBulkConfirmModal(null);
-    setFilterStatus('ALL');
-    showToast(`↺ All progress for ${subject.name} has been reset to 0%.`, 'reset');
-  };
 
   // Add indicator directly to this subject
   const handleAddInlineIndicator = (e: React.FormEvent) => {
@@ -371,32 +351,7 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
             </div>
           </div>
 
-          {/* Bulk Action Buttons */}
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <button
-              id="btn-mark-all-complete"
-              type="button"
-              onClick={() => {
-                setCustomCompleteNote(`Verified complete for ${subject.name}. All documentation archived in subject portfolio.`);
-                setBulkConfirmModal('complete');
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg border border-emerald-200 shadow-2xs transition-colors cursor-pointer"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Mark All Completed</span>
-            </button>
 
-            <button
-              id="btn-reset-subject-progress"
-              type="button"
-              onClick={() => setBulkConfirmModal('reset')}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 shadow-2xs transition-colors cursor-pointer"
-              title="Reset progress to 0%"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-              <span>Reset</span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -807,99 +762,7 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
         </table>
       </div>
 
-      {/* Confirmation Modal: Mark All Completed */}
-      {bulkConfirmModal === 'complete' && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Mark All Indicators Complete
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Are you sure you want to mark all <strong className="text-slate-900 font-bold">{indicators.length} indicators</strong> for <strong className="text-slate-900 font-bold">{subject.name}</strong> as <strong>Completed (100%)</strong>?
-                </p>
-              </div>
-            </div>
 
-            <div className="space-y-1.5 pt-1">
-              <label className="block text-[11px] font-semibold text-slate-700">
-                Audit Note / Verification Text:
-              </label>
-              <textarea
-                rows={2}
-                value={customCompleteNote}
-                onChange={(e) => setCustomCompleteNote(e.target.value)}
-                className="w-full text-xs p-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setBulkConfirmModal(null)}
-                className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmMarkAllComplete}
-                className="px-4 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Mark All 100%</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal: Reset Subject Progress */}
-      {bulkConfirmModal === 'reset' && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-slate-200 shadow-xl max-w-md w-full p-5 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                <RotateCcw className="w-5 h-5" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold text-slate-900">
-                  Reset Subject Progress
-                </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  This will reset all <strong className="text-slate-900 font-bold">{indicators.length} indicators</strong> for <strong className="text-slate-900 font-bold">{subject.name}</strong> back to <span className="font-semibold text-slate-800">Not Started (0%)</span> and clear notes.
-                </p>
-              </div>
-            </div>
-
-            <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg text-xs text-amber-800">
-              This action will reset the completion percentage for this subject back to 0%.
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setBulkConfirmModal(null)}
-                className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmReset}
-                className="px-4 py-1.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset All Progress</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Confirmation Modal: Delete Single Indicator */}
       {indicatorToDelete && (
