@@ -24,6 +24,12 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     selectedTeacherId || (teachers[0]?.id || '')
   );
 
+  // Editable signers state
+  const [coordinatorName, setCoordinatorName] = useState<string>('Dr. Robert Henderson');
+  const [coordinatorTitle, setCoordinatorTitle] = useState<string>('Head of Academics');
+  const [principalName, setPrincipalName] = useState<string>('Elizabeth Warren, M.Ed.');
+  const [principalTitle, setPrincipalTitle] = useState<string>('School Principal');
+
   const teacher = teachers.find((t) => t.id === reportTeacherId) || teachers[0];
 
   const handlePrint = () => {
@@ -225,17 +231,45 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             </div>
 
             <div>
-              <p className="font-semibold text-slate-600 mb-16">Curriculum Coordinator</p>
+              <div className="mb-14">
+                <input
+                  type="text"
+                  value={coordinatorTitle}
+                  onChange={(e) => setCoordinatorTitle(e.target.value)}
+                  className="font-semibold text-slate-600 text-center bg-transparent border border-dashed border-slate-300 rounded px-1 py-0.5 w-full focus:outline-none focus:border-slate-500 print:border-none"
+                  title="Click to edit title"
+                />
+              </div>
               <div className="border-b border-slate-400 w-40 mx-auto mb-1"></div>
-              <p className="font-bold text-slate-900">Dr. Robert Henderson</p>
-              <p className="text-[10px] text-slate-500">Head of Academics</p>
+              <input
+                type="text"
+                value={coordinatorName}
+                onChange={(e) => setCoordinatorName(e.target.value)}
+                className="font-bold text-slate-900 text-center bg-transparent border border-dashed border-slate-300 rounded px-1 py-0.5 w-full focus:outline-none focus:border-slate-500 print:border-none mb-1"
+                title="Click to edit name"
+              />
+              <p className="text-[10px] text-slate-500">Curriculum & Instruction</p>
             </div>
 
             <div>
-              <p className="font-semibold text-slate-600 mb-16">School Principal</p>
+              <div className="mb-14">
+                <input
+                  type="text"
+                  value={principalTitle}
+                  onChange={(e) => setPrincipalTitle(e.target.value)}
+                  className="font-semibold text-slate-600 text-center bg-transparent border border-dashed border-slate-300 rounded px-1 py-0.5 w-full focus:outline-none focus:border-slate-500 print:border-none"
+                  title="Click to edit title"
+                />
+              </div>
               <div className="border-b border-slate-400 w-40 mx-auto mb-1"></div>
-              <p className="font-bold text-slate-900">Elizabeth Warren, M.Ed.</p>
-              <p className="text-[10px] text-slate-500">School Principal</p>
+              <input
+                type="text"
+                value={principalName}
+                onChange={(e) => setPrincipalName(e.target.value)}
+                className="font-bold text-slate-900 text-center bg-transparent border border-dashed border-slate-300 rounded px-1 py-0.5 w-full focus:outline-none focus:border-slate-500 print:border-none mb-1"
+                title="Click to edit name"
+              />
+              <p className="text-[10px] text-slate-500">School Leadership</p>
             </div>
           </div>
         </div>
