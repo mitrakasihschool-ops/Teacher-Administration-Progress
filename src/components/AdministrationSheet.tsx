@@ -94,6 +94,7 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [lastSavedIndicatorId, setLastSavedIndicatorId] = useState<string | null>(null);
+  const [draftNotes, setDraftNotes] = useState<Record<string, string>>({});
 
   // In-app Notification Banner
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'info' | 'reset' } | null>(null);
@@ -508,17 +509,16 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
               <th className="py-3 px-4 w-72">Indicator ({subject.name})</th>
               <th className="py-3 px-3 w-40">Status</th>
               <th className="py-3 px-3 w-36">Completion %</th>
-              <th className="py-3 px-4 min-w-[300px]">
+              <th className="py-3 px-4 min-w-[320px]">
                 Live Progress Notes & Verification
               </th>
-              <th className="py-3 px-3 w-44">Evidence Reference</th>
-              <th className="py-3 px-2 w-16 text-center">Actions</th>
+              <th className="py-3 px-2 w-20 text-center">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs">
             {filteredIndicators.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400">
+                <td colSpan={5} className="py-8 text-center text-slate-400">
                   <p className="text-xs font-medium">No indicators match your filter for this subject.</p>
                   <button
                     type="button"
@@ -548,6 +548,7 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
                 const statusConfig = STATUS_CONFIG[record.status] || STATUS_CONFIG.not_started;
                 const isJustSaved = lastSavedIndicatorId === indicator.id;
                 const isEditingThis = editingIndicatorId === indicator.id;
+                const currentDraftText = draftNotes[indicator.id] !== undefined ? draftNotes[indicator.id] : (record.progressText || '');
 
                 return (
                   <tr
@@ -684,94 +685,84 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
                       </div>
                     </td>
 
-                    {/* 4. Typed Progress Column */}
+                    {/* 4. Typed Progress Notes & Verification Column with explicit Save Button */}
                     <td className="py-3.5 px-4 align-top">
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <div className="relative">
                           <textarea
                             id={`input-progress-${indicator.id}`}
                             rows={2}
-                            value={record.progressText || ''}
+                            value={currentDraftText}
                             onChange={(e) =>
-                              handleFieldChange(indicator.id, 'progressText', e.target.value)
+                              setDraftNotes((prev) => ({ ...prev, [indicator.id]: e.target.value }))
                             }
                             placeholder={`Type progress notes for ${teacher.name} (${subject.name})...`}
-                            className="w-full text-xs font-normal p-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-all resize-y min-h-[64px]"
+                            className="w-full text-xs font-normal p-2.5 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 transition-all resize-y min-h-[60px]"
                           />
                         </div>
 
-                        {/* Status save note / timestamp */}
-                        <div className="flex items-center justify-between text-[10px] text-slate-400">
-                          <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1 text-[10px] text-slate-400">
                             {isJustSaved ? (
                               <span className="text-emerald-600 font-medium flex items-center gap-0.5">
-                                <Save className="w-2.5 h-2.5" /> Saved
+                                <Save className="w-3 h-3" /> Saved to DB
                               </span>
                             ) : record.lastUpdated ? (
                               <span>
-                                Updated: {new Date(record.lastUpdated).toLocaleDateString()} {new Date(record.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                Saved: {new Date(record.lastUpdated).toLocaleDateString()} {new Date(record.lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             ) : (
-                              <span>No notes recorded yet</span>
+                              <span>Unsaved changes</span>
                             )}
                           </div>
 
-                          {/* Quick template triggers */}
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleFieldChange(
-                                  indicator.id,
-                                  'progressText',
-                                  `Verified complete for ${subject.name}. All documentation archived in subject portfolio.`
-                                )
-                              }
-                              className="text-[10px] text-slate-600 hover:text-slate-900 underline cursor-pointer"
-                            >
-                              + &quot;Verified complete&quot;
-                            </button>
-                            <span className="text-slate-300">|</span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleFieldChange(
-                                  indicator.id,
-                                  'progressText',
-                                  `In progress for ${subject.name}: Unit materials drafted, awaiting review.`
-                                )
-                              }
-                              className="text-[10px] text-slate-600 hover:text-slate-900 underline cursor-pointer"
-                            >
-                              + &quot;In progress&quot;
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleFieldChange(indicator.id, 'progressText', currentDraftText);
+                              showToast(`Saved progress notes for ${indicator.code}`, 'success');
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-md shadow-2xs transition-colors cursor-pointer"
+                            title="Save notes and verification to database"
+                          >
+                            <Save className="w-3 h-3" />
+                            <span>Save</span>
+                          </button>
+                        </div>
+
+                        {/* Quick template triggers */}
+                        <div className="flex items-center gap-1.5 pt-1 text-[10px]">
+                          <span className="text-slate-400">Templates:</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const tpl = `Verified complete for ${subject.name}. All documentation archived in subject portfolio.`;
+                              setDraftNotes((prev) => ({ ...prev, [indicator.id]: tpl }));
+                              handleFieldChange(indicator.id, 'progressText', tpl);
+                              showToast(`Saved template for ${indicator.code}`, 'success');
+                            }}
+                            className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
+                          >
+                            &quot;Verified Complete&quot;
+                          </button>
+                          <span className="text-slate-300">|</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const tpl = `In progress for ${subject.name}: Unit materials drafted, awaiting review.`;
+                              setDraftNotes((prev) => ({ ...prev, [indicator.id]: tpl }));
+                              handleFieldChange(indicator.id, 'progressText', tpl);
+                              showToast(`Saved template for ${indicator.code}`, 'success');
+                            }}
+                            className="text-slate-600 hover:text-slate-900 underline cursor-pointer"
+                          >
+                            &quot;In Progress&quot;
+                          </button>
                         </div>
                       </div>
                     </td>
 
-                    {/* 5. Document / Evidence Ref Column */}
-                    <td className="py-3.5 px-3 align-top">
-                      <div className="space-y-1">
-                        <input
-                          type="text"
-                          value={record.documentRef || ''}
-                          onChange={(e) =>
-                            handleFieldChange(indicator.id, 'documentRef', e.target.value)
-                          }
-                          placeholder={`Ref / Drive link...`}
-                          className="w-full text-xs px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400"
-                        />
-                        {record.documentRef && (
-                          <p className="text-[10px] text-slate-400 truncate flex items-center gap-1">
-                            <FileText className="w-2.5 h-2.5" />
-                            Ref: {record.documentRef}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* 6. Actions (Edit / Delete Indicator from this subject) */}
+                    {/* 5. Actions (Edit / Delete Indicator from this subject) */}
                     <td className="py-3.5 px-2 align-top text-center">
                       <div className="flex items-center justify-center gap-1">
                         <button
