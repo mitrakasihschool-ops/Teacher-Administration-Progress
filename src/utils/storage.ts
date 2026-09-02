@@ -79,11 +79,15 @@ export function calculateSubjectProgress(
     const status = item ? item.status : 'not_started';
 
     totalPercentageSum += pct;
-    if (status === 'completed' || status === 'verified' || pct === 100) {
+    if (status === 'completed' || status === 'verified') {
       completedCount++;
     } else if (status === 'needs_revision') {
       revisionCount++;
-    } else if (status === 'in_progress' || pct > 0) {
+    } else if (status === 'in_progress') {
+      inProgressCount++;
+    } else if (pct === 100) {
+      completedCount++;
+    } else if (pct > 0) {
       inProgressCount++;
     } else {
       notStartedCount++;
