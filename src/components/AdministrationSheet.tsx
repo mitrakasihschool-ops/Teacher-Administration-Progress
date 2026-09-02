@@ -659,9 +659,18 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
                           max="100"
                           step="5"
                           value={record.percentage || 0}
-                          onChange={(e) =>
-                            handleFieldChange(indicator.id, 'percentage', parseInt(e.target.value, 10))
-                          }
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            handleFieldChange(indicator.id, 'percentage', val);
+                          }}
+                          onMouseUp={(e) => {
+                            const val = parseInt((e.target as HTMLInputElement).value, 10);
+                            handleFieldChange(indicator.id, 'percentage', val);
+                          }}
+                          onTouchEnd={(e) => {
+                            const val = parseInt((e.target as HTMLInputElement).value, 10);
+                            handleFieldChange(indicator.id, 'percentage', val);
+                          }}
                           className="w-full accent-slate-800 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
                         />
 
@@ -671,7 +680,10 @@ export const AdministrationSheet: React.FC<AdministrationSheetProps> = ({
                             <button
                               key={pct}
                               type="button"
-                              onClick={() => handleFieldChange(indicator.id, 'percentage', pct)}
+                              onClick={() => {
+                                handleFieldChange(indicator.id, 'percentage', pct);
+                                showToast(`Saved ${pct}% for ${indicator.code}`, 'success');
+                              }}
                               className={`text-[10px] font-medium py-0.5 rounded border transition-colors cursor-pointer ${
                                 record.percentage === pct
                                   ? 'bg-slate-900 text-white border-slate-900 font-semibold'
